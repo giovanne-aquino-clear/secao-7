@@ -161,24 +161,84 @@ class WhatsAppController{
     });
 
     this.el.btnAttachPhoto.on('click', event => {
+        this.el.inputPhoto.click();
 
     });
+
+    this.el.inputPhoto.on('change', event => {
+
+        [...this.el.inputPhoto.files].forEach(file => {
+
+            Message.sendImage(this._activeContact.chatId, this._user.email, file);
+
+        });
+
+    });
+
 
     this.el.btnAttachCamera.on('click', event => {
+
+        this.el.panelMessagesContainer.hide();
+        this.el.panelCamera.addClass('open');
+        this.el.panelCamera.css({
+            'height': 'calc(100% - 120px)'
+        });
         
     });
+    this.el.btnClosePanelCamera.on('click', event => {
+
+        this.closeAllMainPanel();
+        this.el.panelMessagesContainer.show();
+
+    });
+    this.el.btnTakePicture.on('click', event => {
+
+    });
+
 
     this.el.btnAttachDocument.on('click', event => {
-        
+   
+        this.closeAllMainPanel();
+        this.el.panelDocumentPreview.addClass('open')
+        this.el.panelDocumentPreview.css({
+            'height': 'calc(100% - 120px)'
+        });
     });
+
+
+    this.el.btnClosePanelDocumentPreview.on('click', e=>{
+
+        this.closeAllMainPanel();
+        this.el.panelMessagesContainer.show();
+
+    });
+
+    this.el.btnSendDocument.on('click', e=>{
+
+
+    })
+
+
     this.el.btnAttachContact.on('click', event => {
-        
+     
+        this.el.modalContacts.show();
+
     });
 
+    this.el.btnCloseModalContacts.on('click', event => {
 
+        this.el.modalContacts.hide();
+
+    });
 
     }
 
+    closeAllMainPanel() {
+
+        this.el.panelMessagesContainer.hide();
+        this.el.panelDocumentPreview.removeClass('open');
+        this.el.panelCamera.removeClass('open');
+    }
     closeAllLeftPanel(){
         this.el.panelAddContact.hide();
         this.el.panelEditProfile.hide();
