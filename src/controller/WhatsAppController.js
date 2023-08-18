@@ -250,7 +250,45 @@ class WhatsAppController{
 
         this.closeRecordMicrophone();
 
-    })
+    });
+
+    this.el.inputText.on('keypress', event => {
+
+        if (event.key === 'Enter' && !event.ctrlKey) {
+            event.preventDefault();
+            this.el.btnSend.click();
+        }
+
+    });
+
+
+    this.el.inputText.on('keyup', event => {
+
+        if (this.el.inputText.innerHTML.length) {
+            this.el.inputPlaceholder.hide();
+            this.el.btnSendMicrophone.hide();
+            this.el.btnSend.show();
+        } else {
+            this.el.inputPlaceholder.show();
+            this.el.btnSendMicrophone.show();
+            this.el.btnSend.hide();
+        }
+
+    });
+
+    this.el.btnEmojis.on('click', e=>{
+        
+        this.el.panelEmojis.toggleClass('open');
+    });
+
+    this.el.panelEmojis.querySelectorAll('.emoji').forEach(emoji=>{
+
+        emoji.on('click', e=>{
+
+            console.log(emoji);
+        });
+
+    });
 
     }
 
@@ -262,6 +300,8 @@ class WhatsAppController{
             this.el.recordMicrophoneTimer.innerHTML = Format.toTime(Date.now() - start)  
 
         },100);
+
+
     }
 
 
