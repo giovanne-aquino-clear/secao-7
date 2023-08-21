@@ -6,12 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --confing webpack.confing.js",
-    "start": "webpack-dev-server" 
-  
+    "start": "webpack-dev-server"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "pdfjs-dist": "^2.0.489",
     "webpack": "^3.1.0",
     "webpack-dev-server": "^2.5.1"
   }
