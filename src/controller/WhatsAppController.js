@@ -195,9 +195,28 @@ export class WhatsAppController{
 
         this.closeAllMainPanel();
         this.el.panelMessagesContainer.show();
+        this._camera.stop();
 
     });
     this.el.btnTakePicture.on('click', event => {
+
+        let dataUrl = this._camera.takePicture();
+        this.el.pictureCamera.src =  dataUrl;
+        this.el.pictureCamera.show();
+        this.el.videoCamera.hide();
+        this.el.btnReshootPanelCamera.show();
+        this.el.containerTakePicture.hide();
+        this.el.containerSendPicture.show();
+
+    });
+
+    this.el.btnReshootPanelCamera.on('click', e=>{
+        
+        this.el.pictureCamera.hide();
+        this.el.videoCamera.show();
+        this.el.btnReshootPanelCamera.hide();
+        this.el.containerTakePicture.show();
+        this.el.containerSendPicture.hide();
 
     });
 
@@ -209,7 +228,25 @@ export class WhatsAppController{
         this.el.panelDocumentPreview.css({
             'height': 'calc(100% - 120px)'
         });
+        this.el.inputDocument.click();
+
     });
+
+    this.el.inputDocument.on('change', e=>{
+
+        if(this.el.inputDocument.files.length){
+
+            let file = this.el.inputDocument.files[0];
+            
+            this.panelDocumentPreviewController.getPriviewData().then(data=>{
+
+                console.log('ok',data);
+            }).catch(err=>{
+                console.log('err',err);
+            })
+
+        }
+    })
 
 
     this.el.btnClosePanelDocumentPreview.on('click', e=>{
