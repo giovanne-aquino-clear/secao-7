@@ -23,8 +23,13 @@ export class WhatsAppController{
         this._firebase.initAuth()
         .then(response =>{
 
-            this._user = response.user;
-            this.el.appContent.show();
+            this._user = new User();
+
+            User.findByEmail();
+
+            this.el.appContent.css({
+                display:'flex'
+            });
 
         })
         .catch(err=>{
