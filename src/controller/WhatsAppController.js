@@ -4,6 +4,7 @@ import {CameraController} from './CameraController';
 import {MicrophoneController} from './MicrophoneController';
 
 import { Firebase } from '../util/Firebase';  
+import {User} from './../models/User'
 
 
 export class WhatsAppController{
@@ -25,12 +26,21 @@ export class WhatsAppController{
 
             this._user = new User();
 
-            User.findByEmail();
+            let userRef = User.findByEmail(response.user.email);
 
-            this.el.appContent.css({
-                display:'flex'
+            userRef.set({
+                name: response.user.displayName,
+                email: response.user.email,
+                photo: response.user.photoURL
+            }).then(()=> {
+
+                this.el.appContent.css({
+                    display:'flex'
+                });
+
             });
-
+           
+            console.log('response', response.user.email)
         })
         .catch(err=>{
             console.error(err);
