@@ -3,14 +3,33 @@ import {Format} from '../util/Format';
 import {CameraController} from './CameraController';
 import {MicrophoneController} from './MicrophoneController';
 
-import {DocumentPreviewController} from './DocumentPreviewController';
+import { Firebase } from '../util/Firebase';  
+
 
 export class WhatsAppController{
 
     constructor(){
+
+        this._firebase = new Firebase();
+        this.initAuth();
+
         this.loadElements();
         this.elementsPrototype();
         this.initEvents();
+    }
+
+    initAuth(){
+
+        this._firebase.initAuth()
+        .then(response =>{
+
+            this._user = response.user;
+            this.el.appContent.show();
+
+        })
+        .catch(err=>{
+            console.error(err);
+        });
     }
 
 
@@ -322,21 +341,30 @@ export class WhatsAppController{
 
         this.el.recordMicrophone.show();
         this.el.btnSendMicrophone.hide();
-        this.startRecordMicrophoneTime();
-        this._microphoneController = new MicrophoneController();
 
+        this._microphoneController = new MicrophoneController();
+        
+        this._microphoneController.on('ready', musica=>{
+            
+            this._microphoneController.startRecorder();
+
+        });
+
+        this._microphoneController.on('recordtimer', timer =>{  
+            this.el.recordMicrophoneTimer.innerHTML = Format.toTime(timer);
+        });
 
     })
 
     this.el.btnCancelMicrophone.on('click', event => {
-        this._microphoneController.stop();
+        this._microphoneController.stopRecorder();
         this.closeRecordMicrophone();
 
     });
     
     this.el.btnFinishMicrophone.on('click', e => {
 
-        this._microphoneController.stop();
+        this._microphoneController.stopRecorder();
         this.closeRecordMicrophone();
 
     });
