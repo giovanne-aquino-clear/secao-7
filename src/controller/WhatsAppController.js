@@ -29,6 +29,8 @@ export class WhatsAppController{
 
                 document.querySelector('title').innerHTML = data.name + ' - WhatsApp Clone'
 
+                this.el.inputNamePanelEditProfile.innerHTML = data.name;
+
                 if(data.photo){
                     let photo = this.el.imgPanelEditProfile;
                     photo.src = data.photo;
@@ -42,21 +44,15 @@ export class WhatsAppController{
 
             });
 
-            let userRef = User.findByEmail(response.user.email);
+            this._user.name = response.user.displayName 
+            this._user.email = response.user.email 
+            this._user.photo = response.user.photoURL
 
-            userRef.set({
-                name: response.user.displayName,
-                email: response.user.email,
-                photo: response.user.photoURL
-            }).then(()=> {
-
+            this._user.save().then(()=>{
                 this.el.appContent.css({
                     display:'flex'
                 });
-
             });
-           
-            console.log('response', response.user.email)
         })
         .catch(err=>{
             console.error(err);
@@ -188,13 +184,23 @@ export class WhatsAppController{
         })
 
         this.el.btnSavePanelEditProfile.on('click', e=>{
-            console.log(this.el.inputNamePanelEditProfile);
+
+            this.el.btnSavePanelEditProfile.disabled = true;
+            this._user.name = this.el.inputNamePanelEditProfile.innerHTML;
+            this._user.save().then(()=>{
+
+                this.el.btnSavePanelEditProfile.disabled = false;
+
+            })
+
         });
 
         this.el.formPanelAddContact.on('subimit',e=>{
 
             e.preventDefault();
             let formData = new FormData(this.el.formPanelAddContact);
+
+            this._user.addContact();
         });
 
         this.el.contactsMessagesList.querySelectorAll('.contact-item').forEach(item=>{

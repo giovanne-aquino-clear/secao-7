@@ -3,11 +3,6 @@ import { Model } from './Model';
 
 export  class User extends Model {
 
-    constructor(id){
-        super();
-        if (id) this.getById(id);
-    }
-
     get name() { return this._data.name; }
     set name(value) { this._data.name = value; }
 
@@ -16,13 +11,21 @@ export  class User extends Model {
 
     get photo() { return this._data.photo; }
     set photo(value) { this._data.photo = value; }
+    
+    constructor(id){
+        super();
+        if (id) this.getById(id);
+    }
 
 
         getById(id){
             return new Promise((s,f)=>{
-                User.findByEmail(id).get().then(doc=>{
+                User.findByEmail(id).onSnapshot(doc=>{
 
                     this.fromJSON(doc.data());
+               
+                    s(doc);
+                    
                 });
             });
         }
