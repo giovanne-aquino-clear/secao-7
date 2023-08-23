@@ -26,7 +26,7 @@ export  class User extends Model {
                
                     s(doc);
                     
-                });
+                }); 
             });
         }
 
@@ -40,9 +40,44 @@ export  class User extends Model {
     
         }
 
+        static getContactsRef(id){
+            return User.getRef()
+                .doc(id)
+                .collection('contacts');
+        }
+
         static findByEmail(email){
 
         return User.getRef().doc(email)
+
+        }
+
+        addContact(contact){
+
+            return User.getContactsRef()
+            .doc(btoa(contact.email))
+            .set(contact.toJSON());
+
+        }
+
+        getContacts(){
+
+            return new Promise((s,f)=>{
+                User.getContactsRef(this.email).onSnapshot(docs =>{
+
+                    let contacts = [];
+                    let data = (doc=>{
+                        let data = doc.data();
+                        data.id = doc.id;
+                        contacts.push(data);
+                    });
+
+                    this.trigger('contactschange', docs);
+                    s(contacts);
+
+                });
+
+            })
 
         }
 
