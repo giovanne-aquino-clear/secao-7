@@ -1,9 +1,14 @@
+import { Firebase } from "../util/Firebase";
 import {Model} from "./Model"
+import { Format } from "../util/Format";
 export class Message extends Model{
 
     constructor(){
         super();
     }
+
+    get id() { return this._data.id; }
+    set id(value) { this._data.id = value; }
 
     get content() { return this._data.content; }
     set content(value) { this._data.content = value; }
@@ -19,14 +24,14 @@ export class Message extends Model{
  
     getViewElement(me = true){
 
-        let element = document.createElement('div');
+        let div = document.createElement('div');
 
-        element.className = 'message';
+        div.className = 'message';
 
         switch (this.type) {
 
             case 'contact':
-                element.innerHTML = `
+                div.innerHTML = `
                     <div class="_3_7SH kNKwo tail">
                         <span class="tail-container"></span>
                         <span class="tail-container highlight"></span>
@@ -66,7 +71,7 @@ export class Message extends Model{
             break;
 
             case 'document':
-                    element.innerHTML = `
+                    div.innerHTML = `
                         <div class="_3_7SH _1ZPgd">
                                 <div class="_1fnMt _2CORf">
                                     <a class="_1vKRe" href="#">
@@ -109,7 +114,7 @@ export class Message extends Model{
             break;
 
             case 'image':
-                element.innerHTML = `
+                div.innerHTML = `
                     <div class="_3_7SH _3qMSo">
                         <div class="KYpDv">
                             <div>
@@ -153,7 +158,7 @@ export class Message extends Model{
             break;
             
             case 'audio':
-                element.innerHTML = `
+                div.innerHTML = `
                         <div class="_3_7SH _17oKL">
                             <div class="_2N_Df LKbsn">
                                 <div class="_2jfIu">
@@ -235,8 +240,8 @@ export class Message extends Model{
             break
             
             default:
-            element.innerHTML = `
-                            <div class="font-style _3DFk6 tail">
+            div.innerHTML = `
+                            <div class="font-style _3DFk6 tail" id= "_${this.id}"> 
                                 <span class="tail-container"></span>
                                 <span class="tail-container highlight"></span>
                                 <div class="Tkt2p">
@@ -247,7 +252,7 @@ export class Message extends Model{
                                     </div>
                                     <div class="_2f-RV">
                                         <div class="_1DZAH">
-                                            <span class="message-time">${Format.fbTimeStampToTime(this.timeStamp)}</span>
+                                            <span class="message-time">${Format.timeStampToTime(this.timeStamp)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -261,4 +266,24 @@ export class Message extends Model{
         return div;
 
     }
+
+    static send(chatId, from, type, content){
+       return Message.getRef(chatId).add({
+            content,
+            timeStamp: new Date(),
+            status: 'wait',
+            type,
+            from
+        });
+    }
+
+    static getRef(chatId){
+
+        return Firebase.db()
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages');
+
+    }
+
 }
