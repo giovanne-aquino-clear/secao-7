@@ -172,21 +172,39 @@ export class WhatsAppController{
                     let data = doc.data();
                     data.id = doc.id;
 
-                    if(!this.el.panelMessagesContainer.querySelector('#_' + data.id))
-                    {   
-
                     let message = new Message();
 
                     message.fromJSON(data);
 
+
                     let me = (data.from === this._user.email)
+
+
+                    if(!this.el.panelMessagesContainer.querySelector('#_' + data.id))
+                    {   
+
+                    if(!me){
+
+                        doc.ref.set({
+                            status: 'read'
+                        },{
+                            merge: true
+                        });
+
+
+                    }
 
                     let view = message.getViewElement(me);
 
                     this.el.panelMessagesContainer.appendChild(view);
-                }
+                
+                } else if(me) {
 
-             });
+                    let msgEl = this.el.panelMessagesContainer.querySelector('#_' + data.id); 
+                    msgEl.querySelector('.message-status').innerHTML = message.getStatusViewElement().outerHTML;
+
+             } 
+            });
 
                 if(autoScroll){
                     this.el.panelMessagesContainer.scrollTop = 
@@ -288,7 +306,7 @@ export class WhatsAppController{
 
     initEvents(){
 
-        this.el.inputSearchContacts.on('keyup', e=> {
+      /*  this.el.inputSearchContacts.on('keyup', e=> {
             
             if(this.el.inputSearchContacts.value.length > 0 ){
                 this.el.inputSearchContactsPlaceholder.hide();
@@ -299,7 +317,7 @@ export class WhatsAppController{
             this._user.getContacts(this.el.inputSearchContacts.value);
 
 
-        });
+        });*/
 
         this.el.myPhoto.on('click', e=>{
             console.log('teste1', el.inputSearchContacts);
@@ -456,6 +474,28 @@ export class WhatsAppController{
         this.el.containerTakePicture.show();
         this.el.containerSendPicture.hide();
 
+    });
+
+    this.el.btnSendPicture.on('click', e => {
+
+        this.el.btnSendPicture.disabled = true;
+
+        let regex = /^data:(.+);base64,(.*)$/; 
+        let result = this.el.pictureCamera.src.match(regex);
+        let mimeType = result[1];
+        let ext = mimeType.split('/')[1];
+        let filename = `camera${Date.now()}.${ext}`;
+
+        fetch(this.el.pictureCamera.src)
+            .then(res => {return res.arrayBuffer(); })
+            .then(buffer => {return new File ([buffer], filename, {type: mimeType}); })
+            .then(file => {
+
+                Message.sendImage(this._contactActive.chatId, this._user.email, file);
+
+                        this.el.btnSendPicture.disabled = false;
+
+            });
     });
 
 
