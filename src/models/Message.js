@@ -57,7 +57,7 @@ export class Message extends Model{
                                 </div>
                                 <div class="_3a5-b">
                                     <div class="_1DZAH" role="button">
-                                        <span class="message-time">${Format.fbTimeStampToTime(this.timeStamp)}</span>
+                                        <span class="message-time">${Format.timeStampToTime(this.timeStamp)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -105,7 +105,7 @@ export class Message extends Model{
                                     </div>
                                     <div class="_3Lj_s">
                                         <div class="_1DZAH" role="button">
-                                            <span class="message-time">${Format.fbTimeStampToTime(this.timeStamp)}</span>
+                                            <span class="message-time">${Format.timeStampToTime(this.timeStamp)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -140,7 +140,7 @@ export class Message extends Model{
                                 </div>
                                 <div class="_2TvOE">
                                     <div class="_1DZAH" role="button">
-                                        <span class="message-time text-white">${Format.fbTimeStampToTime(this.timeStamp)}</span>
+                                        <span class="message-time text-white">${Format.timeStampToTime(this.timeStamp)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -223,7 +223,7 @@ export class Message extends Model{
                                 </div>
                                 <div class="_27K_5">
                                     <div class="_1DZAH" role="button">
-                                        <span class="message-time">${Format.fbTimeStampToTime(this.timeStamp)}</span>
+                                        <span class="message-time">${Format.timeStampToTime(this.timeStamp)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -237,6 +237,17 @@ export class Message extends Model{
                             </div>
                         </div>
             `;
+
+
+                div.querySelector('.message-photo').on('load', e=>{
+
+                div.querySelector( '.message-photo').show();    
+                div.querySelector('._340lu').hide();
+                div.querySelector( '._3v3PK').css({
+                    height: 'auto'
+                });
+            });
+
             break
             
             default:
@@ -274,6 +285,40 @@ export class Message extends Model{
         div.firstElementChild.classList.add(className);
         return div;
 
+    }
+
+    static sendImage(chatId, from, file)
+    {
+ 
+        return new Promise((s, f) => {
+ 
+            let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
+ 
+            uploadTask.on('state_changed', e => {
+ 
+                console.info('upload', e);
+ 
+            }, err => {
+                console.error(err)
+            }, () => {
+ 
+                console.log(uploadTask.snapshot)
+
+                uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+                    Message.send(
+                        chatId, 
+                        from, 
+                        'image', 
+                        downloadURL                    
+                    ).then(() => {
+                        s();
+                    });
+                });
+         
+            });
+ 
+        });
+ 
     }
 
     static send(chatId, from, type, content){

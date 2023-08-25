@@ -197,6 +197,7 @@ export class WhatsAppController{
                     let view = message.getViewElement(me);
 
                     this.el.panelMessagesContainer.appendChild(view);
+                    console.log('view', view);
                 
                 } else if(me) {
 
@@ -206,14 +207,12 @@ export class WhatsAppController{
              } 
             });
 
-                if(autoScroll){
-                    this.el.panelMessagesContainer.scrollTop = 
-                    (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight)
-                }else{
-                
-                    this.el.panel.panelMessagesContainer.scrollTop = scrollTop;
+            if (autoScroll) {
+                this.el.panelMessagesContainer.scrollTop = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight);
+            } else {
+                this.el.panelMessagesContainer.scrollTop = scrollTop;
+            }
 
-                }
 
             });
 
@@ -429,10 +428,9 @@ export class WhatsAppController{
 
         [...this.el.inputPhoto.files].forEach(file => {
 
-            Message.sendImage(this._activeContact.chatId, this._user.email, file);
+            Message.sendImage(this._contactActive.chatId, this._user.email, file);
 
         });
-
     });
 
 
