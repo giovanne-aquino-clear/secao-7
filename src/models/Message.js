@@ -1,6 +1,7 @@
 import { Firebase } from "../util/Firebase";
 import {Model} from "./Model"
 import { Format } from "../util/Format";
+
 export class Message extends Model{
 
     constructor(){
@@ -22,9 +23,32 @@ export class Message extends Model{
     get status() { return this._data.status; }
     set status(value) { this._data.status = value; }
  
+    get info() { return this._data.info; }
+    set info(value) { this._data.info = value; }
+
+    get size() { return this._data.size; }
+    set size(value) { this._data.size = value; }
+ 
+    get fileType() { return this._data.fileType; }
+    set fileType(value) { this._data.fileType = value; }
+ 
+    get from() { return this._data.from; }
+    set from(value) { this._data.from = value; }
+
+    get preview() { return this._data.preview; }
+    set preview(value) { this._data.preview = value; }
+
+    get filename() { return this._data.filename; }
+    set filename(value) { this._data.filename = value; }
+
+ 
+ 
+ 
     getViewElement(me = true){
 
         let div = document.createElement('div');
+        
+        div.id = `_${this.id}`
 
         div.className = 'message';
 
@@ -111,6 +135,12 @@ export class Message extends Model{
                                 </div>
                             </div>
             `;
+
+            div.on('click', e=> {
+
+                window.open(this.content)
+            })
+
             break;
 
             case 'image':
@@ -155,6 +185,17 @@ export class Message extends Model{
                         </div>
                     </div>
             `;
+
+
+            div.querySelector('.message-photo').on('load', e=>{
+
+                div.querySelector( '.message-photo').show();    
+                div.querySelector('._34Olu').hide();
+                div.querySelector( '._3v3PK').css({
+                    height: 'auto'
+                });
+            });
+
             break;
             
             case 'audio':
@@ -238,16 +279,6 @@ export class Message extends Model{
                         </div>
             `;
 
-
-                div.querySelector('.message-photo').on('load', e=>{
-
-                div.querySelector( '.message-photo').show();    
-                div.querySelector('._340lu').hide();
-                div.querySelector( '._3v3PK').css({
-                    height: 'auto'
-                });
-            });
-
             break
             
             default:
@@ -287,36 +318,100 @@ export class Message extends Model{
 
     }
 
+    static upload(file,from){
+
+        return new Promise((s,f)=>{
+
+            let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
+ 
+        uploadTask.on('state_changed', e => {
+
+            console.info('upload', e);
+
+        }, err => {
+
+            f(err); 
+
+        }, () => {
+
+            s(uploadTask.snapshot);
+
+        });
+
+        });
+
+        
+
+    }
+
+    static sendDocument(chatId, from, file, filePreview, info ){
+
+        Message.send(chatId, from, 'document', '').then(msgRef => {
+
+            console.log('msg', msgRef)
+
+                Message.upload(file,from).then(snapshot=>{
+                snapshot.ref.getDownloadURL().then(downloadURL => {
+                    let downloadFile = downloadURL
+
+                    if (filePreview){
+
+                        Message.upload(filePreview, from).then(snapshot2=>{
+                            snapshot2.ref.getDownloadURL().then(downloadURL2 => {
+    
+                            let downloadPreview = downloadURL2
+        
+                            msgRef.set({
+                                content: downloadFile,
+                                preview: downloadPreview,
+                                filename: file.name,
+                                size: file.size,
+                                fileType: file.type,
+                                status: 'sent',
+                                info
+                            }, {
+                                merge: true
+                            })
+                      }); 
+                    })  
+                    
+                    } else { 
+
+                        msgRef.set({
+                            content: downloadFile,
+                            filename: file.name,
+                            size: file.size,
+                            fileType: file.type,
+                            status: 'sent'
+                        }, {
+                            merge: true
+                        })  
+
+                    }
+            });
+        });
+    });
+
+       
+    }
+
     static sendImage(chatId, from, file)
     {
  
         return new Promise((s, f) => {
  
-            let uploadTask = Firebase.hd().ref(from).child(Date.now() + '_' + file.name).put(file);
- 
-            uploadTask.on('state_changed', e => {
- 
-                console.info('upload', e);
- 
-            }, err => {
-                console.error(err)
-            }, () => {
- 
-                console.log(uploadTask.snapshot)
-
-                uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
-                    Message.send(
-                        chatId, 
-                        from, 
-                        'image', 
-                        downloadURL                    
-                    ).then(() => {
-                        s();
-                    });
+            Message.upload(file,from).then(snapshot=>{
+            snapshot.ref.getDownloadURL().then(downloadURL => {
+                Message.send(
+                    chatId, 
+                    from, 
+                    'image', 
+                    downloadURL                    
+                ).then(() => {
+                    s();
                 });
-         
             });
- 
+          });    
         });
  
     }
@@ -325,6 +420,8 @@ export class Message extends Model{
        
         return new Promise((s,f)=>{
 
+            console.log('teste2')
+            console.log(chatId, from, type, content)
 
             Message.getRef(chatId).add({
                 content,
@@ -333,11 +430,14 @@ export class Message extends Model{
                 type,
                 from
             }).then(result=>{
-                result.parent.doc(result.id).set({
+               let docRef= result.parent.doc(result.id);
+               docRef.set({
                     status: 'sent'
                  },{
                     merge: true 
-          });
+          }).then(()=>{
+            s(docRef);
+          })
          });
         });
         }
