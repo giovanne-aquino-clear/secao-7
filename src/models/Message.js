@@ -41,6 +41,13 @@ export class Message extends Model{
     get filename() { return this._data.filename; }
     set filename(value) { this._data.filename = value; }
 
+    get photo() { return this._data.photo; }
+    set photo(value) { this._data.photo = value; }
+
+    get duration() { return this._data.duration; }
+    set duration(value) { this._data.duration = value; }
+
+
  
  
  
@@ -286,7 +293,84 @@ export class Message extends Model{
                                 </span>
                             </div>
                         </div>
-            `;
+            `;  if (this.photo) {
+
+                let img = div.querySelector('.message-photo');
+                img.src = this.photo;
+                img.show();
+
+            }
+
+            let audio = div.querySelector('audio');
+            let btnPlay = div.querySelector('.audio-play');
+            let btnPause = div.querySelector('.audio-pause');
+            let inputRange = div.querySelector('[type="range"]');
+
+
+            div.querySelector('.message-audio-duration').innerHTML = Format.toTime(this.duration * 1000);
+
+            audio.onloadeddata = e => {
+
+                div.querySelector('.audio-load').hide();
+                btnPlay.show();
+
+            }
+
+            audio.onplay = e => {
+
+                btnPlay.hide();
+                btnPause.show();
+
+            }
+
+            audio.onpause = e=> {
+
+                div.querySelector('.message-audio-duration').innerHTML = Format.toTime(this.duration * 1000);
+                btnPlay.show();
+                btnPause.hide();
+
+            }
+
+            audio.ontimeupdate = e => {
+
+                btnPlay.hide();
+                btnPause.hide();
+
+                div.querySelector('.message-audio-duration').innerHTML = Format.toTime(audio.currentTime * 1000);
+                inputRange.value = (audio.currentTime * 100) / this.duration;
+
+                if (audio.paused) {
+                    btnPlay.show();
+                } else {    
+                    btnPause.show();
+                }
+                
+            }
+
+            audio.onended = e => {
+
+                audio.currentTime = 0;
+
+            }
+
+            btnPlay.on('click', e => {
+
+                audio.play();
+
+            });
+
+            btnPause.on('click', e => {
+
+                audio.pause();
+
+            });
+
+            inputRange.on('change', e => {
+
+                audio.currentTime = (inputRange.value * this.duration) / 100;
+
+            });
+
 
             break
             
@@ -358,6 +442,34 @@ export class Message extends Model{
         return Message.send(chatId, from, 'contact', contact);
 
     }   
+
+    static sendAudio(chatId, from, file, metadata, photo) {
+        return Message.send(chatId, from, 'audio', '').then(msgRef => {
+            Message.upload(file, from).then(snapshot => {
+                snapshot.ref.getDownloadURL().then(downloadURL => {
+                    let downloadFile = downloadURL;
+                    msgRef.set({
+                        content: downloadFile,
+                        size: file.size,
+                        fileType: file.type,
+                        status: 'sent',
+                        photo,
+                        duration: metadata.duration
+                    }, { merge: true })
+                })
+            })
+        })
+    }
+
+
+
+
+
+
+
+
+
+
 
     static sendDocument(chatId, from, file, filePreview, info ){
 

@@ -137,7 +137,7 @@ export class WhatsAppController{
             this._user.getContacts()
         }
 
-        setActiveChat(contact) {
+        setActiveChat(contact) {// resv
 
             // Verificando se existe um contato ativo
             if(this._contactActive) {
@@ -752,10 +752,22 @@ export class WhatsAppController{
         this.closeRecordMicrophone();
 
     });
-    
-    this.el.btnFinishMicrophone.on('click', e => {
 
-        this._microphoneController.stopRecorder();
+        this.el.btnFinishMicrophone.on('click', event => {
+
+            this._microphoneController.on('recorded', (file, metadata) => {
+
+                Message.sendAudio(
+                    this._contactActive.chatId, 
+                    this._user.email, 
+                    file, 
+                    metadata, 
+                    this._user.photo);
+
+            });
+
+
+        this._microphoneController.stopRecorder();  
         this.closeRecordMicrophone();
 
     });
