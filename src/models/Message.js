@@ -92,6 +92,15 @@ export class Message extends Model{
 
                     </div>
                 `;
+
+            if (this.content.photo) {
+
+                let img = div.querySelector('.photo-contact-sended');
+                img.src = this.content.photo;
+                img.show();
+
+            }
+
             break;
 
             case 'document':
@@ -343,6 +352,12 @@ export class Message extends Model{
         
 
     }
+
+    static sendContact(chatId, from, contact){
+
+        return Message.send(chatId, from, 'contact', contact);
+
+    }   
 
     static sendDocument(chatId, from, file, filePreview, info ){
 

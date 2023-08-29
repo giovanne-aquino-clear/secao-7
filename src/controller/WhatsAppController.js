@@ -8,6 +8,7 @@ import {User} from './../models/User'
 import {Chat} from './../models/Chat'
 import { Message } from '../models/Message';
 import { Base64 } from "../util/Base64";
+import { ContactsController} from './ContactsController';
 
 export class WhatsAppController{
 
@@ -136,89 +137,159 @@ export class WhatsAppController{
             this._user.getContacts()
         }
 
-        setActiveChat(contact){
+        setActiveChat(contact) {
 
-            if(this._contactActive){
-                Message.getRef(this._contactActive.chatId).onSnapshot(()=>{});
+            // Verificando se existe um contato ativo
+            if(this._contactActive) {
+    
+                // Recebe um "vazio" para já existe um ativo 
+                // É para zerar o Listener anterior
+                Message.getRef(this._contactActive.chatId).onSnapshot(()=>{})
+    
             }
-
-            this._contactActive = contact
-
+    
+            // Guardar o contato ativo
+            this._contactActive = contact;
+    
+            //console.log('chatId', contact.chatId)
+    
+            // Atualizar os dados do nome do contato
             this.el.activeName.innerHTML = contact.name;
+    
+            // Atualizar os dados do status
             this.el.activeStatus.innerHTML = contact.status;
-            if(contact.photo){
-                let img =this.el.activePhoto;
+    
+            // Antes de atualizar os dados da photo, verificar se existe photo
+            if(contact.photo) {
+    
+                let img = this.el.activePhoto;
                 img.src = contact.photo;
                 img.show();
+    
             }
+    
+            // Escondendo o painel "home" para mostrar as mensagens
             this.el.home.hide();
+    
+            // Mostrar o painel "main"
             this.el.main.css({
-                display:'flex'
+    
+                display: 'flex'
+    
             });
-
-                
+    
+            // Limpando o conteudo do container
             this.el.panelMessagesContainer.innerHTML = '';
-
-            Message.getRef(this._contactActive.chatId).orderBy('timeStamp')
-            .onSnapshot(docs =>{
-             
- 
-         
-                let scrollTop = this.el.panelMessagesContainer.scrollTop;
-                let scrollTopMax = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight);
-                let autoScroll = (scrollTop >= scrollTopMax);
-
-                docs.forEach(doc => {
-
+    
+            // Primeiro vamos carregar a referencia da mensagem
+            Message.getRef(this._contactActive.chatId).orderBy('timeStamp').onSnapshot(docs => {
+    
+                 // Verificando as configurações do Scroll
+                 let scrollTop = this.el.panelMessagesContainer.scrollTop;
+    
+                 // Calculo é o limite que conseguiremos descer
+                 let scrollTopMax = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight)
+    
+                 let autoScroll = (scrollTop >= scrollTopMax)
+    
+                docs.forEach( doc => {
+    
                     let data = doc.data();
                     data.id = doc.id;
-
+    
                     let message = new Message();
-
+    
+                    // Carregando o JSON
                     message.fromJSON(data);
-
-
-                    let me = (data.from === this._user.email)
-
-
-                    if(!this.el.panelMessagesContainer.querySelector('#_' + data.id))
-                    {   
-
-                    if(!me){
-
-                        doc.ref.set({
-                            status: 'read'
-                        },{
-                            merge: true
-                        });
-
-
-                    }
-
+    
+                    let me = (data.from === this._user.email);
+    
                     let view = message.getViewElement(me);
-
-                    this.el.panelMessagesContainer.appendChild(view);
+    
+                    // Verificando se a mensagem já existe
+                    // para não incluir novamente
+                    if (!this.el.panelMessagesContainer.querySelector('#_' + data.id)) {
+    
+                        // Verificando se a mensagem é do meu contato
+                        // (para fazer o "double check blue")
+                        if (!me) {
+    
+                            doc.ref.set({
+    
+                                status: 'read'
+    
+                            }, 
+                                // Fazer o merge para não perder o conteúdo
+                                {
+    
+                                    merge: true
+    
+                            });
+    
+                        }
+    
+                        // Agora vamos adicionar as mensagens dentro do panel
+                        this.el.panelMessagesContainer.appendChild(view);
+    
+                    } else if(me) {
+    
+                        let parent = this.el.panelMessagesContainer.querySelector('#_' + data.id).parentNode;
+    
+                        // Trocando o "parentesco" do elemento
+                        parent.replaceChild(view, this.el.panelMessagesContainer.querySelector('#_' + data.id))
+    
+                    }
+                                    
+                    
                    
-                
-                } else if(me) {
-
-                    let msgEl = this.el.panelMessagesContainer.querySelector('#_' + data.id); 
-                    msgEl.querySelector('.message-status').innerHTML = message.getStatusViewElement().outerHTML;
-
-             } 
+    
+                    if (message.type === 'contact') {
+    
+                        view.querySelector('.btn-message-send').on('click', e => {
+    
+                            // Antes de adiocionar o contato, já podemos criar o "chat"
+                            // Se já existir, só traz a referencia do id, senão cria o chat
+                            Chat.createIfNotExists(this._user.email, message.content.email).then(chat => {
+        
+                                let contact = new User(message.content.email)
+    
+                                contact.on('datachange', data => {
+    
+                                    // Colocamos o id do chat no contato que estamos criando
+                                    contact.chatId = chat.id;
+    
+                                    this._user.addContact(contact);
+    
+                                    // Adicionando o id no meu próprio usuário
+                                    this._user.chatId = chat.id; 
+    
+                                    contact.addContact(this._user);
+    
+                                    this.setActiveChat(contact)
+    
+                                })
+    
+                            })
+        
+                        })
+    
+                    }
+    
+                });
+    
+                if(autoScroll) {
+    
+                    this.el.panelMessagesContainer.scrollTop = this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight
+    
+                } else {
+    
+                    this.el.panelMessagesContainer.scrollTop = scrollTop;
+    
+                }
+    
             });
-
-            if (autoScroll) {
-                this.el.panelMessagesContainer.scrollTop = (this.el.panelMessagesContainer.scrollHeight - this.el.panelMessagesContainer.offsetHeight);
-            } else {
-                this.el.panelMessagesContainer.scrollTop = scrollTop;
-            }
-
-
-            });
-
+    
         }
-
     loadElements(){
 
             this.el = {};
@@ -306,18 +377,23 @@ export class WhatsAppController{
 
     initEvents(){
 
-      /*  this.el.inputSearchContacts.on('keyup', e=> {
-            
-            if(this.el.inputSearchContacts.value.length > 0 ){
+     /*   this.el.inputSearchContacts.on('keyup', e => {
+
+            // Verificando se o conteudo do campo é maior que 0
+            if(this.el.inputSearchContacts.value.length > 0) {
+
                 this.el.inputSearchContactsPlaceholder.hide();
+
             } else {
+
                 this.el.inputSearchContactsPlaceholder.show();
+
             }
 
+            // console.log(this.el.inputSearchContacts.value)
             this._user.getContacts(this.el.inputSearchContacts.value);
-
-
-        });*/
+            
+        })*/
 
         this.el.myPhoto.on('click', e=>{
             console.log('teste1', el.inputSearchContacts);
@@ -378,7 +454,7 @@ export class WhatsAppController{
 
                 if(data.name){
 
-                    Chat.createIfNotExists().then(chat=> {
+                    Chat.createIfNotExists(this._user.email, contact.email).then(chat=> {
                         contact.chatId = chat.id;
 
                         this._user.chatId = chat.id;
@@ -630,7 +706,18 @@ export class WhatsAppController{
 
     this.el.btnAttachContact.on('click', event => {
      
-        this.el.modalContacts.show();
+
+        this._contactsController = new ContactsController(this.el.modalContacts, this._user);
+        this._contactsController.on('select', contact=>  {
+
+            Message.sendContact(
+                this._contactActive.chatId,
+                this._user.email,
+                contact 
+            )
+
+        })
+        this._contactsController.open();
 
 
     });
@@ -638,7 +725,6 @@ export class WhatsAppController{
     this.el.btnCloseModalContacts.on('click', event => {
 
         this._contactsController.close();
-        this.el.modalContacts.hide();   
 
     });
 

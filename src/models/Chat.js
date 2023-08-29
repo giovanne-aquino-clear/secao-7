@@ -65,7 +65,7 @@ export class Chat extends Model{
 
                         s(chat);
 
-                    });
+                    }).catch(err=>{ f(err) });
 
                 } else {
 

@@ -63,26 +63,31 @@ export  class User extends Model {
             .set(contact.toJSON());
 
         }
+        getContacts(filter = '') {
 
-        getContacts(filter = ''){
-
-            return new Promise((s,f)=>{
+            return new Promise((resolve, reject) => {
+    
                 User.getContactsRef(this.email).where('name', '>=', filter).onSnapshot(docs =>{
-
-                    let contacts = [];
-                    let data = (doc=>{
+    
+                    let conctats = [];
+                    docs.forEach(doc => {
+    
                         let data = doc.data();
+    
                         data.id = doc.id;
-                        contacts.push(data);
+    
+                        conctats.push(data);
+    
                     });
-
-                    this.trigger('contactschange', docs);
-                    s(contacts);
-
+    
+                    this.trigger('contactschange', docs)
+    
+                    resolve(conctats)
+    
                 });
-
-            })
-
+    
+            }); 
+    
         }
 
 }
