@@ -102,6 +102,7 @@ export  class User extends Model {
     
                     });
     
+                    
                     this.trigger('contactschange', docs)
     
                     resolve(conctats)
