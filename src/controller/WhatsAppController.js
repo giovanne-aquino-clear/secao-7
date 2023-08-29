@@ -9,6 +9,7 @@ import {Chat} from './../models/Chat'
 import { Message } from '../models/Message';
 import { Base64 } from "../util/Base64";
 import { ContactsController} from './ContactsController';
+import { Upload } from '../util/Upload';
 
 export class WhatsAppController{
 
@@ -92,7 +93,7 @@ export class WhatsAppController{
                             <div class="_25Ooe">
                                 <span dir="auto" title="Nome do Contato" class="_1wjpf">${contact.name}</span>
                             </div>
-                            <div class="_3Bxar">
+                            <div class="_3Bxar"> <span class="_3T2VG">${Format.timeStampToTime(contact.lastMessageTime)}</span>
                                 <span class="_3T2VG"></span>
                             </div>
                         </div>
@@ -110,7 +111,7 @@ export class WhatsAppController{
                                     </div>
                                     <span dir="ltr" class="_1wjpf _3NFp9">${contact.lastMessage}</span>
                                     <div class="_3Bxar">
-                                        <span>
+                                        <span>  
                                             <div class="_15G96">
                                                 <span class="OUeyt messages-count-new" style="display:none;">1</span>
                                             </div>
@@ -286,8 +287,29 @@ export class WhatsAppController{
                     this.el.panelMessagesContainer.scrollTop = scrollTop;
     
                 }
+
+
+            let msgs = this.el.panelMessagesContainer
+            let msgList = msgs.querySelectorAll('.message')
+    
+            let lastMessage = msgList[msgList.length - 1].querySelector('.message-text').innerHTML
+
+            this._user.updateLastMessage('', this._contactActive.email).then(result=>{
+                console.log('resulte:', result)
+                User.getContactsRef(this._user.email).doc(result.id).set({
+                    lastMessage
+                }, {
+                    merge: true
+                }
+                )
+                
+                
+
+            })
+    
     
             });
+
     
         }
     loadElements(){
@@ -396,7 +418,6 @@ export class WhatsAppController{
         })*/
 
         this.el.myPhoto.on('click', e=>{
-            console.log('teste1', el.inputSearchContacts);
             this.closeAllLeftPanel();
             this.el.panelEditProfile.show();
             setTimeout(()=>{
@@ -424,6 +445,21 @@ export class WhatsAppController{
         this.el.photoContainerEditProfile.on('click', e=>{
             this.el.inputProfilePhoto.click();
         });
+
+        this.el.inputProfilePhoto.on('change', e => {
+            if (this.el.inputProfilePhoto.files.length > 0) {
+                let file = this.el.inputProfilePhoto.files[0];
+                Upload.send(file, this._user.email).then(snapshot => {
+                    snapshot.ref.getDownloadURL().then(downloadURL => {
+                        this._user.photo = downloadURL
+                        this._user.save().then(() => {
+                            this.el.btnClosePanelEditProfile.click()
+                        })
+                    })
+                })
+            }
+        })
+
         this.el.inputNamePanelEditProfile.on('keypress', e=>{
 
             if (e.key === 'Enter'){
@@ -758,7 +794,7 @@ export class WhatsAppController{
             this._microphoneController.on('recorded', (file, metadata) => {
 
                 Message.sendAudio(
-                    this._contactActive.chatId, 
+                    this._contactActive .chatId, 
                     this._user.email, 
                     file, 
                     metadata, 

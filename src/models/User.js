@@ -63,6 +63,28 @@ export  class User extends Model {
             .set(contact.toJSON());
 
         }
+
+        updateLastMessage(filter = "", selectedContactEmail){
+            return new Promise((s,f)=>{
+                User.getContactsRef(this.email).where('name', '>=', filter).onSnapshot(docs=>{
+                    console.log('DOCS::::', docs)
+    
+                    docs.forEach(doc=>{
+                        
+                        let data = doc.data()
+                        let id = doc.id
+    
+                        if(data.email === selectedContactEmail){
+                            s({data, id})
+                        }
+    
+                    })
+                })
+            })
+        }
+       
+    
+
         getContacts(filter = '') {
 
             return new Promise((resolve, reject) => {
